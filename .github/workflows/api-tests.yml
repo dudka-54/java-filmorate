@@ -5,5 +5,4 @@ on:
 
 jobs:
   build:
-    if: false  # ← job никогда не запустится
     uses: yandex-praktikum/java-filmorate/.github/workflows/api-tests.yml@ci

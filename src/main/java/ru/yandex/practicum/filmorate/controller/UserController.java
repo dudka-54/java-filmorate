@@ -41,6 +41,9 @@ public class UserController {
             if (user.getBirthday().isAfter(LocalDate.now())) {
                 throw new ValidationException("Дата рождения не может быть в будущем");
             }
+            if (user.getBirthday().isBefore(LocalDate.of(1900, 1, 1))) {
+                throw new ValidationException("Дата рождения должна быть не раньше 1900 года");
+            }
         } catch (ValidationException e) {
             log.warn("Ошибка валидации: {}", String.valueOf(e));
             throw e;
