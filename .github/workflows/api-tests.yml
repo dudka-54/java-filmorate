@@ -1,8 +1,9 @@
-# name: Films API Tests
-#
-# on:
-#   pull_request:
-#
-# jobs:
-#   build:
-#     uses: yandex-praktikum/java-filmorate/.github/workflows/api-tests.yml@ci
+name: Films API Tests
+
+on:
+  pull_request:
+
+jobs:
+  build:
+    if: false  # ← job никогда не запустится
+    uses: yandex-praktikum/java-filmorate/.github/workflows/api-tests.yml@ci
