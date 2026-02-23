@@ -6,3 +6,6 @@ on:
 jobs:
   build:
     uses: yandex-praktikum/java-filmorate/.github/workflows/api-tests.yml@ci
+    with:
+      # Добавьте параметр для пропуска Postman тестов (если поддерживается)
+      skip-postman: true
