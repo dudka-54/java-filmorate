@@ -6,9 +6,7 @@ import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
-import ru.yandex.practicum.filmorate.storage.InMemoryFilmStorage;
 
-import java.time.LocalDate;
 import java.util.*;
 
 @Slf4j
@@ -17,12 +15,11 @@ import java.util.*;
 @AllArgsConstructor
 public class FilmController {
     private final FilmService filmService;
-    private final InMemoryFilmStorage inMemoryFilmStorage;
 
     @GetMapping
     public Collection<Film> findAll() {
-        log.info("Выбран метод GET - получение списка всех фильмов");
-        return inMemoryFilmStorage.getFilms().values();
+        log.debug("Выбран метод GET - получение списка всех фильмов");
+        return filmService.getAllFilms();
     }
 
     @PostMapping
@@ -35,6 +32,24 @@ public class FilmController {
     public Film update(@RequestBody Film newFilm) throws ValidationException {
         log.debug("Получен запрос на обновление фильма: {}", newFilm);
         return filmService.update(newFilm);
+    }
+
+    @PutMapping("/{id}/like/{userId}")
+    public Film addLike(@PathVariable long id, @PathVariable long userId) throws ValidationException {
+        log.debug("Получен запрос на лайк фильма");
+        return filmService.addLike(id, userId);
+    }
+
+    @DeleteMapping("/{id}/like/{userId}")
+    public Film deleteLike(@PathVariable long id, @PathVariable long userId) throws ValidationException {
+        log.debug("Получен запрос на удаление лайка");
+        return filmService.deleteLike(id, userId);
+    }
+
+    @GetMapping("/popular")
+    public List<Film> getPopular(@RequestParam(defaultValue = "10") Integer count) {
+        log.debug("Получен запрос на получение популярных фильмов");
+        return filmService.getPopular(count);
     }
 }
 

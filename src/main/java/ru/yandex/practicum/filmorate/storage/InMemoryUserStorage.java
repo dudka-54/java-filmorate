@@ -2,11 +2,10 @@ package ru.yandex.practicum.filmorate.storage;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.GetMapping;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 
-import java.time.LocalDate;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -30,7 +29,7 @@ public class InMemoryUserStorage implements UserStorage {
         User oldUser = users.get(newUser.getId());
         if (oldUser == null) {
             log.warn("Пользователь с id={} не найден", newUser.getId());
-            throw new ValidationException("Пользователь не найден");
+            throw new NotFoundException("Пользователь не найден");
         }
         oldUser.setEmail(newUser.getEmail());
         oldUser.setLogin(newUser.getLogin());

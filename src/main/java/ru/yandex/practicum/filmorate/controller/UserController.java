@@ -7,10 +7,7 @@ import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
 
-import java.time.LocalDate;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 @Slf4j
 @RestController
@@ -36,8 +33,27 @@ public class UserController {
         return userService.update(newUser);
     }
 
-    @PutMapping("/users/{id}/friends/{friendId}")
-    public User addFriend(@PathVariable long id, @PathVariable long friendId){
+    @PutMapping("/{id}/friends/{friendId}")
+    public User addFriend(@PathVariable long id, @PathVariable long friendId) throws ValidationException {
+        log.debug("Получен запрос на добавление в друзья");
         return userService.addFriend(id, friendId);
+    }
+
+    @DeleteMapping("/{id}/friends/{friendId}")
+    public User deleteFriend(@PathVariable long id, @PathVariable long friendId) throws ValidationException {
+        log.debug("Получен запрос на удаление из друзей");
+        return userService.deleteFriend(id, friendId);
+    }
+
+    @GetMapping("/{id}/friends")
+    public Set<User> getFriendsList(@PathVariable long id) throws ValidationException {
+        log.debug("Получен зарос на получение списка друзей");
+        return userService.getFriendsList(id);
+    }
+
+    @GetMapping("/{id}/friends/common/{otherId}")
+    public Set<User> getCommonFriends(@PathVariable long id, @PathVariable long otherId) throws ValidationException {
+        log.debug("Получен запрос на получение списка общих друзей");
+        return userService.getCommonFriends(id, otherId);
     }
 }

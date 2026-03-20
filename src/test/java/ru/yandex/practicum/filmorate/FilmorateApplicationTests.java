@@ -2,12 +2,15 @@ package ru.yandex.practicum.filmorate;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.yandex.practicum.filmorate.controller.FilmController;
 import ru.yandex.practicum.filmorate.controller.UserController;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.service.FilmService;
 
 import java.time.LocalDate;
 
@@ -15,22 +18,23 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 public class FilmorateApplicationTests {
+    @Autowired
     private FilmController filmController;
-    private Film validFilm;
 
+    @Autowired
     private UserController userController;
+
+    private Film validFilm;
     private User validUser;
 
     @BeforeEach
     void setUp() {
-        filmController = new FilmController();
         validFilm = new Film();
         validFilm.setName("Тестовый фильм");
         validFilm.setDescription("Описание");
         validFilm.setReleaseDate(LocalDate.of(2000, 1, 1));
         validFilm.setDuration(120);
 
-        userController = new UserController();
         validUser = new User();
         validUser.setEmail("test@example.com");
         validUser.setLogin("testlogin");
@@ -141,10 +145,12 @@ public class FilmorateApplicationTests {
         updateData.setReleaseDate(LocalDate.of(2000, 1, 1));
         updateData.setDuration(120);
 
-        assertThrows(ValidationException.class, () ->
+        // Обновление несуществующего фильма должно выбрасывать NotFoundException
+        assertThrows(NotFoundException.class, () ->
                 filmController.update(updateData)
         );
     }
+
 
     @Test
     void createUser_ValidUser_Success() throws ValidationException {
@@ -254,7 +260,8 @@ public class FilmorateApplicationTests {
         updateData.setName("Имя");
         updateData.setBirthday(LocalDate.of(1990, 1, 1));
 
-        assertThrows(ValidationException.class, () ->
+        // Обновление несуществующего пользователя должно выбрасывать NotFoundException
+        assertThrows(NotFoundException.class, () ->
                 userController.update(updateData)
         );
     }

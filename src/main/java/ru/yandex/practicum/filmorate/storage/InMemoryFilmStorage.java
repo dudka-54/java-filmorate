@@ -7,7 +7,6 @@ import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 
-import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -61,4 +60,10 @@ public class InMemoryFilmStorage implements FilmStorage {
         log.debug("Увеличиваем значение id перед использованием текущего значения в выражении");
         return ++currentMaxId;
     }
+
+    public Film getFilm(long id) {
+        return films.get(id);
+    }
+
+
 }
