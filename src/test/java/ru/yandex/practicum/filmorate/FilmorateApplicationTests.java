@@ -2,12 +2,15 @@ package ru.yandex.practicum.filmorate;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.yandex.practicum.filmorate.controller.FilmController;
 import ru.yandex.practicum.filmorate.controller.UserController;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.service.FilmService;
 
 import java.time.LocalDate;
 
@@ -15,22 +18,23 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 public class FilmorateApplicationTests {
+    @Autowired
     private FilmController filmController;
-    private Film validFilm;
 
+    @Autowired
     private UserController userController;
+
+    private Film validFilm;
     private User validUser;
 
     @BeforeEach
     void setUp() {
-        filmController = new FilmController();
         validFilm = new Film();
         validFilm.setName("Тестовый фильм");
         validFilm.setDescription("Описание");
         validFilm.setReleaseDate(LocalDate.of(2000, 1, 1));
         validFilm.setDuration(120);
 
-        userController = new UserController();
         validUser = new User();
         validUser.setEmail("test@example.com");
         validUser.setLogin("testlogin");
@@ -40,7 +44,7 @@ public class FilmorateApplicationTests {
 
     @Test
     void createFilm_ValidFilm_Success() throws ValidationException {
-        Film created = filmController.create(validFilm);
+        Film created = filmController.create(validFilm).getBody();
         assertNotNull(created.getId());
         assertEquals("Тестовый фильм", created.getName());
     }
@@ -74,7 +78,7 @@ public class FilmorateApplicationTests {
     void createFilm_DescriptionExactly200_Success() throws ValidationException {
         String desc200 = "a".repeat(200);
         validFilm.setDescription(desc200);
-        Film created = filmController.create(validFilm);
+        Film created = filmController.create(validFilm).getBody();
         assertEquals(desc200, created.getDescription());
     }
 
@@ -89,7 +93,7 @@ public class FilmorateApplicationTests {
     @Test
     void createFilm_ReleaseDateExactlyBirthOfCinema_Success() throws ValidationException {
         validFilm.setReleaseDate(LocalDate.of(1895, 12, 28));
-        Film created = filmController.create(validFilm);
+        Film created = filmController.create(validFilm).getBody();
         assertEquals(LocalDate.of(1895, 12, 28), created.getReleaseDate());
     }
 
@@ -112,13 +116,13 @@ public class FilmorateApplicationTests {
     @Test
     void createFilm_DurationPositive_Success() throws ValidationException {
         validFilm.setDuration(1);
-        Film created = filmController.create(validFilm);
+        Film created = filmController.create(validFilm).getBody();
         assertEquals(1, created.getDuration());
     }
 
     @Test
     void updateFilm_ValidFilm_Success() throws ValidationException {
-        Film created = filmController.create(validFilm);
+        Film created = filmController.create(validFilm).getBody();
         Film updateData = new Film();
         updateData.setId(created.getId());
         updateData.setName("Обновленный фильм");
@@ -126,7 +130,7 @@ public class FilmorateApplicationTests {
         updateData.setReleaseDate(LocalDate.of(2000, 1, 1));
         updateData.setDuration(150);
 
-        Film updated = filmController.update(updateData);
+        Film updated = filmController.update(updateData).getBody();
         assertEquals("Обновленный фильм", updated.getName());
         assertEquals("Новое описание", updated.getDescription());
         assertEquals(150, updated.getDuration());
@@ -141,14 +145,16 @@ public class FilmorateApplicationTests {
         updateData.setReleaseDate(LocalDate.of(2000, 1, 1));
         updateData.setDuration(120);
 
-        assertThrows(ValidationException.class, () ->
+        // Обновление несуществующего фильма должно выбрасывать NotFoundException
+        assertThrows(NotFoundException.class, () ->
                 filmController.update(updateData)
         );
     }
 
+
     @Test
     void createUser_ValidUser_Success() throws ValidationException {
-        User created = userController.create(validUser);
+        User created = userController.create(validUser).getBody();
         assertNotNull(created.getId());
         assertEquals("test@example.com", created.getEmail());
     }
@@ -180,21 +186,21 @@ public class FilmorateApplicationTests {
     @Test
     void createUser_EmailWithAt_Success() throws ValidationException {
         validUser.setEmail("test@example.com");
-        User created = userController.create(validUser);
+        User created = userController.create(validUser).getBody();
         assertEquals("test@example.com", created.getEmail());
     }
 
     @Test
     void createUser_NameNull_UsesLogin() throws ValidationException {
         validUser.setName(null);
-        User created = userController.create(validUser);
+        User created = userController.create(validUser).getBody();
         assertEquals(validUser.getLogin(), created.getName());
     }
 
     @Test
     void createUser_NameBlank_UsesLogin() throws ValidationException {
         validUser.setName("   ");
-        User created = userController.create(validUser);
+        User created = userController.create(validUser).getBody();
         assertEquals(validUser.getLogin(), created.getName());
     }
 
@@ -217,20 +223,20 @@ public class FilmorateApplicationTests {
     @Test
     void createUser_BirthdayToday_Success() throws ValidationException {
         validUser.setBirthday(LocalDate.now());
-        User created = userController.create(validUser);
+        User created = userController.create(validUser).getBody();
         assertEquals(LocalDate.now(), created.getBirthday());
     }
 
     @Test
     void createUser_BirthdayPast_Success() throws ValidationException {
         validUser.setBirthday(LocalDate.of(1900, 1, 1));
-        User created = userController.create(validUser);
+        User created = userController.create(validUser).getBody();
         assertEquals(LocalDate.of(1900, 1, 1), created.getBirthday());
     }
 
     @Test
     void updateUser_ValidUser_Success() throws ValidationException {
-        User created = userController.create(validUser);
+        User created = userController.create(validUser).getBody();
         User updateData = new User();
         updateData.setId(created.getId());
         updateData.setEmail("new@example.com");
@@ -238,7 +244,7 @@ public class FilmorateApplicationTests {
         updateData.setName("Новое Имя");
         updateData.setBirthday(LocalDate.of(1995, 5, 5));
 
-        User updated = userController.update(updateData);
+        User updated = userController.update(updateData).getBody();
         assertEquals("new@example.com", updated.getEmail());
         assertEquals("newlogin", updated.getLogin());
         assertEquals("Новое Имя", updated.getName());
@@ -254,7 +260,8 @@ public class FilmorateApplicationTests {
         updateData.setName("Имя");
         updateData.setBirthday(LocalDate.of(1990, 1, 1));
 
-        assertThrows(ValidationException.class, () ->
+        // Обновление несуществующего пользователя должно выбрасывать NotFoundException
+        assertThrows(NotFoundException.class, () ->
                 userController.update(updateData)
         );
     }
@@ -262,7 +269,7 @@ public class FilmorateApplicationTests {
     @Test
     void createUser_WithoutId_Success() throws ValidationException {
         validUser.setId(null);
-        User created = userController.create(validUser);
+        User created = userController.create(validUser).getBody();
         assertNotNull(created.getId());
     }
 }
