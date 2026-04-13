@@ -13,6 +13,7 @@ public class User {
     String login;
     String name;
     LocalDate birthday;
+    FriendshipStatus friendshipStatus;
 
     Set<Long> friendsId = new HashSet<>();
 }

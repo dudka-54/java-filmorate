@@ -6,9 +6,6 @@ import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * Film.
- */
 @Data
 public class Film {
     Long id;
@@ -16,6 +13,8 @@ public class Film {
     String description;
     LocalDate releaseDate;
     int duration;
+    Genre genre;
+    MPA mpa;
 
     Set<Long> likes = new HashSet<>();
 
