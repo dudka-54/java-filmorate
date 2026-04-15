@@ -25,7 +25,6 @@ public class InMemoryUserStorage implements UserStorage {
 
     @Override
     public User update(User newUser) throws ValidationException {
-
         User oldUser = users.get(newUser.getId());
         if (oldUser == null) {
             log.warn("Пользователь с id={} не найден", newUser.getId());

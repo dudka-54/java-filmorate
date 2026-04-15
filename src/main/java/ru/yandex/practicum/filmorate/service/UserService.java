@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.model.FriendshipStatus;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.InMemoryUserStorage;
 
@@ -74,6 +75,17 @@ public class UserService {
         log.info("Запрос на добавление друга: пользователь {} хочет добавить друга {}", id, friendId);
         User user = inMemoryUserStorage.getUser(id);
         User userFriend = inMemoryUserStorage.getUser(friendId);
+        if (user.getFriendships().containsKey(friendId)) {
+            FriendshipStatus currentStatus = user.getFriendships().get(friendId);
+            if (currentStatus == FriendshipStatus.PENDING) {
+                throw new ValidationException("Заявка уже отправлена и ожидает подтверждения");
+            } else if (currentStatus == FriendshipStatus.CONFIRMED) {
+                throw new ValidationException("Пользователи уже являются друзьями");
+            }
+        }
+        if (id == friendId) {
+            throw new ValidationException("Нельзя добавить самого себя в друзья");
+        }
         if (user == null) {
             throw new NotFoundException("Пользователь с id " + id + " не найден");
         }
@@ -84,16 +96,45 @@ public class UserService {
         validateUser(user);
         log.debug("Валидация пользователя {}", friendId);
         validateUser(userFriend);
-        log.info("Добавление друга {} пользователю {}", friendId, id);
-        user.getFriendsId().add(friendId);
-        userFriend.getFriendsId().add(id);
+        user.getFriendships().put(friendId, FriendshipStatus.PENDING);
+        userFriend.getFriendships().put(id, FriendshipStatus.PENDING);
+        log.debug("Пользователь {} и пользователь {} попадают в списки friendsId со статусом PENDING",
+                user, userFriend);
         update(userFriend);
-        log.info("Друг {} успешно добавлен пользователю {}", friendId, id);
+        log.info("Пользователь успешно {} отправил запрос в друзья пользователю {}", id, friendId);
+        return update(user);
+    }
+
+    public User confirmFriend(long id, long friendId){
+        log.info("Запрос на добавление в друзья: отправитель={}, получатель={}", friendId, id);
+        User user = inMemoryUserStorage.getUser(id);
+        User userFriend = inMemoryUserStorage.getUser(friendId);
+        if (user == null) {
+            throw new NotFoundException("Пользователь с id " + id + " не найден");
+        }
+        if (userFriend == null) {
+            throw new NotFoundException("Пользователь с id " + friendId + " не найден");
+        }
+        if (!user.getFriendships().containsKey(friendId)) {
+            throw new ValidationException("Нет заявки в друзья от пользователя " + friendId);
+        }
+
+        if (user.getFriendships().get(friendId) != FriendshipStatus.PENDING) {
+            throw new ValidationException("Заявка уже обработана или пользователи уже друзья");
+        }
+        log.debug("Валидация пользователя {}", id);
+        validateUser(user);
+        log.debug("Валидация пользователя {}", friendId);
+        validateUser(userFriend);
+        userFriend.getFriendships().replace(id, FriendshipStatus.CONFIRMED);
+        user.getFriendships().replace(friendId, FriendshipStatus.CONFIRMED);
+        log.info("Пользователь {} и пользователь {} меняют статус с PENDING на CONFIRMED", id, userFriend);
+        update(userFriend);
         return update(user);
     }
 
     public User deleteFriend(long id, long friendId) throws ValidationException {
-        log.info("Запрос на удаление друга: пользователь {} хочет удалить друга {}", id, friendId);
+        log.info("Запрос на удаление друга: пользователь {} хочет удалить пользователя {} из списка друзей", id, friendId);
 
         User user = inMemoryUserStorage.getUser(id);
         User userFriend = inMemoryUserStorage.getUser(friendId);
@@ -103,7 +144,7 @@ public class UserService {
         if (userFriend == null) {
             throw new NotFoundException("Пользователь с id " + friendId + " не найден");
         }
-        if (!user.getFriendsId().contains(friendId)) {
+        if (!user.getFriendships().containsKey(friendId)) {
             log.debug("Пользователи {} и {} не являются друзьями, удалять нечего", id, friendId);
             return user;
         }
@@ -113,8 +154,8 @@ public class UserService {
         validateUser(userFriend);
 
         log.info("Удаление друга {} у пользователя {}", friendId, id);
-        user.getFriendsId().remove(friendId);
-        userFriend.getFriendsId().remove(id);
+        user.getFriendships().remove(friendId);
+        userFriend.getFriendships().remove(id);
 
         update(userFriend);
         User updatedUser = update(user);
@@ -124,12 +165,11 @@ public class UserService {
     }
 
     public Set<User> getFriendsList(long id) throws ValidationException {
-
         User user = inMemoryUserStorage.getUser(id);
         if (user == null) {
             throw new NotFoundException("Пользователь с id " + id + " не найден");
         }
-        return user.getFriendsId().stream()
+        return user.getFriendships().keySet().stream()
                 .map(id1 -> inMemoryUserStorage.getUser(id1))
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());

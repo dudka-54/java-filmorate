@@ -45,6 +45,13 @@ public class UserController {
         return ResponseEntity.ok(user);
     }
 
+    @PutMapping("/{id}/friends/{friendId}")
+    public ResponseEntity<User> confirmFriend(@PathVariable long id, @PathVariable long friendId){
+        User user = userService.confirmFriend(id, friendId);
+        return ResponseEntity.ok(user);
+    }
+
+
     @DeleteMapping("/{id}/friends/{friendId}")
     public ResponseEntity<User> deleteFriend(@PathVariable long id, @PathVariable long friendId) throws ValidationException {
         User user = userService.deleteFriend(id, friendId);
