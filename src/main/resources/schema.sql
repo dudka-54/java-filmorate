@@ -8,6 +8,18 @@ genre VARCHAR,
 mpa VARCHAR
 )
 
+CREATE TABLE mpa (
+film_id BIGINT,
+mpa_id INTEGER NOT NULL
+PRIMARY KEY (film_id, genre_id)
+)
+
+CREATE TABLE genres (
+film_id BIGINT NOT NULL,
+genre_id INTEGER NOT NULL,
+PRIMARY KEY (film_id, genre_id)
+)
+
 CREATE TABLE film_likes(
 film_id BIGINT,
 user_id BIGINT,

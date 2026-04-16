@@ -21,7 +21,7 @@ public class MpaService {
         return inMemoryMpaStorage.getAllMpa();
     }
 
-    public Mpa getMpaOnId(int id) {
+    public Mpa getMpaOnId(Integer id) {
         log.info("Получение всех рейтингов по id {}", id);
         if(!(inMemoryMpaStorage.getAllIds().contains(id))){
             throw new NotFoundException("Такого id нет");

@@ -21,7 +21,7 @@ public class GenreService {
         return inMemoryGenreStorage.getAllGenres();
     }
 
-    public Genre getGenreOnId(int id) {
+    public Genre getGenreOnId(Integer id) {
         log.info("Получение жанра по id {}", id);
         if (!(inMemoryGenreStorage.getAllIds().contains(id))) {
             throw new NotFoundException("Такого id нет");

@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.InMemoryFilmStorage;
 import ru.yandex.practicum.filmorate.storage.InMemoryUserStorage;
@@ -25,6 +26,10 @@ public class FilmService {
     private final InMemoryUserStorage inMemoryUserStorage;
 
     private final UserService userService;
+
+    private final GenreService genreService;
+
+    private final MpaService mpaService;
 
     public void validateFilm(Film film) throws ValidationException {
         try {
@@ -46,6 +51,7 @@ public class FilmService {
             if (film.getDuration() <= 0) {
                 throw new ValidationException("Продолжительность фильма должна быть положительным числом");
             }
+
         } catch (ValidationException e) {
             log.warn("Ошибка валидации: {}", String.valueOf(e));
             throw e;
@@ -54,6 +60,9 @@ public class FilmService {
 
     public Film create(Film film) throws ValidationException {
         validateFilm(film);
+        Mpa mpa = film.getMpa();
+        Mpa fullMpa = mpaService.getMpaOnId(mpa.getId());
+        film.setMpa(fullMpa);
         Film savedFilm = inMemoryFilmStorage.save(film);
         log.info("Фильм успешно добавлен - {}", film);
         return savedFilm;
@@ -65,8 +74,14 @@ public class FilmService {
             throw new NotFoundException("Фильм с id " + newFilm.getId() + " не найден");
         }
         validateFilm(newFilm);
+        Mpa mpa = newFilm.getMpa();
+        Mpa fullMpa = mpaService.getMpaOnId(mpa.getId());
+        newFilm.setMpa(fullMpa);
+        newFilm.setLikes(existingFilm.getLikes());
+        if (newFilm.getGenre() == null) {
+            newFilm.setGenre(existingFilm.getGenre());
+        }
         Film film = inMemoryFilmStorage.update(newFilm);
-        log.debug("Создаем объект копию oldFilm обновляемого фильма");
         log.info("Фильм успешно обновлен - {}", newFilm);
         return film;
     }
@@ -91,7 +106,6 @@ public class FilmService {
         log.debug("Получен объект Film {} по id {}", film.getName(), filmId);
         validateFilm(film);
         userService.validateUser(user);
-
 
         film.getLikes().add(userId);
         log.info("Лайк успешно поставлен");
