@@ -42,6 +42,7 @@ public class InMemoryUserStorage implements UserStorage {
         return oldUser;
     }
 
+    @Override
     public Collection<User> findAll() {
         return users.values();
     }
@@ -58,6 +59,7 @@ public class InMemoryUserStorage implements UserStorage {
         return ++currentMaxId;
     }
 
+    @Override
     public User getUser(long id) {
         return users.get(id);
     }

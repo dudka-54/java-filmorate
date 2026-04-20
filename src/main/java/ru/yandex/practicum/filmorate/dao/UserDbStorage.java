@@ -5,9 +5,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
+import ru.yandex.practicum.filmorate.dao.mappers.UserMapper;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
+
+import java.util.Collection;
+import java.util.List;
 
 @Qualifier
 @Repository
@@ -49,5 +53,34 @@ public class UserDbStorage implements UserStorage {
         );
         log.info("Обновлён пользователь с id={}", newUser.getId());
         return newUser;
+    }
+
+    @Override
+    public Collection<User> findAll() {
+        String sql = "SELECT *" +
+                "FROM users" +
+                "ORDER BY id";
+        return jdbcTemplate.query(sql, new UserMapper());
+    }
+
+    @Override
+    public User getUser(long id) {
+        String sql = "SELECT * " +
+                "FROM users" +
+                "WHERE id = ?";
+        return jdbcTemplate.queryForObject(sql, new UserMapper(), id);
+    }
+
+    public void addFriend(long id, long friendId) {
+        String sql = "INSERT INTO friendships(user_id, friend_id, status)" +
+                "VALUES (?, ?, 'PENDING')";
+        jdbcTemplate.update(sql, id, friendId);
+    }
+
+    public void confirmFriend(long id, long friendId) {
+        String sql = "UPDATE friendships" +
+                    "SET status = 'CONFIRMED'" +
+                    "WHERE id = ? AND friend_id = ?";
+        jdbcTemplate.update(sql,id, friendId);
     }
 }

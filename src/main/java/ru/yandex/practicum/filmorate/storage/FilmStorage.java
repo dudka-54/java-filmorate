@@ -7,4 +7,6 @@ public interface FilmStorage {
     public Film save(Film film);
 
     public Film update(Film newFilm) throws ValidationException;
+
+    Film getFilm(long id);
 }
