@@ -60,9 +60,22 @@ public class InMemoryFilmStorage implements FilmStorage {
         log.debug("Увеличиваем значение id перед использованием текущего значения в выражении");
         return ++currentMaxId;
     }
+
+
+    //Не писал реализацию данных методов так как InMemoryFilmStorage рудимент для показательной работы @Qualifier
     @Override
     public Film getFilm(long id) {
         return films.get(id);
+    }
+
+    @Override
+    public void addLike(long filmId, long userId) {
+
+    }
+
+    @Override
+    public void deleteLike(long filmId, long userId) {
+
     }
 
 

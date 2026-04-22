@@ -45,12 +45,6 @@ public class UserController {
         return ResponseEntity.ok(user);
     }
 
-    @PutMapping("/{id}/friends/{friendId}")
-    public ResponseEntity<User> confirmFriend(@PathVariable long id, @PathVariable long friendId){
-        User user = userService.confirmFriend(id, friendId);
-        return ResponseEntity.ok(user);
-    }
-
 
     @DeleteMapping("/{id}/friends/{friendId}")
     public ResponseEntity<User> deleteFriend(@PathVariable long id, @PathVariable long friendId) throws ValidationException {
@@ -60,13 +54,13 @@ public class UserController {
 
     @GetMapping("/{id}/friends")
     public ResponseEntity<Set<User>> getFriendsList(@PathVariable long id) throws ValidationException {
-        Set<User> friends = userService.getFriendsList(id);
+        Set<User> friends = userService.getFriendsSet(id);
         return ResponseEntity.ok(friends);
     }
 
     @GetMapping("/{id}/friends/common/{otherId}")
     public ResponseEntity<Set<User>> getCommonFriends(@PathVariable long id, @PathVariable long otherId) throws ValidationException {
-        Set<User> commonFriends = userService.getCommonFriends(id, otherId);
+        Set<User> commonFriends = userService.getCommonFriendsSet(id, otherId);
         return ResponseEntity.ok(commonFriends);
     }
 }

@@ -7,8 +7,6 @@ import ru.yandex.practicum.filmorate.model.Genre;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.fasterxml.jackson.databind.type.LogicalType.Map;
-
 @Component
 @Slf4j
 public class InMemoryGenreStorage implements GenreStorage {
@@ -38,6 +36,7 @@ public class InMemoryGenreStorage implements GenreStorage {
         return Optional.ofNullable(genreMap.get(id));
     }
 
+    @Override
     public List<Integer> getAllIds(){
         return genreMap.values().stream()
                 .map(Genre::getId)

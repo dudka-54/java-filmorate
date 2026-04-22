@@ -13,4 +13,10 @@ public interface UserStorage {
     public Collection<User> findAll();
 
     public User getUser(long id);
-    }
+
+    void addFriend(long id, long friendId);
+
+    void confirmFriend(long id, long friendId);
+
+    void deleteFriend(long id, long friendId);
+}

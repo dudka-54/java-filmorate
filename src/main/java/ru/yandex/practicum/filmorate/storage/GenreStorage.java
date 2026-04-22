@@ -9,4 +9,6 @@ public interface GenreStorage {
     public List<Genre> getAllGenres();
 
     public Optional<Genre> getGenreOnId(int id);
+
+    List<Integer> getAllIds();
 }

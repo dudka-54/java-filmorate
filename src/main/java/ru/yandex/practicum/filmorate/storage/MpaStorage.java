@@ -9,4 +9,6 @@ public interface MpaStorage {
     public List<Mpa> getAllMpa();
 
     public Optional<Mpa> getMpaOnId(int id);
+
+    List<Integer> getAllIds();
 }

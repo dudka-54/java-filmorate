@@ -25,13 +25,19 @@ public class FilmController {
         return ResponseEntity.ok(films);
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<Film> getFilm(@PathVariable long id) {
+        log.info("Получен запрос на получение фильма {}", id);
+        Film film = filmService.getFilm(id);
+        return ResponseEntity.ok(film);
+    }
+
     @PostMapping
     public ResponseEntity<Film> create(@RequestBody Film film) throws ValidationException {
         log.debug("Получен запрос на создание фильма: {}", film);
         Film created = filmService.create(film);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
-
 
     @PutMapping
     public ResponseEntity<Film> update(@RequestBody Film newFilm) throws ValidationException {
@@ -57,5 +63,6 @@ public class FilmController {
         List<Film> popularFilms = filmService.getPopular(count);
         return ResponseEntity.ok(popularFilms);
     }
+
 }
 
