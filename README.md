@@ -1,12 +1,21 @@
 ```mermaid
 erDiagram
+    MPA {
+        INTEGER mpa_id PK
+        VARCHAR mpa_name
+    }
+
+    GENRES {
+        INTEGER genre_id PK
+        VARCHAR genre_name
+    }
+
     USERS {
         BIGINT id PK
         VARCHAR email
         VARCHAR login
         VARCHAR name
         DATE birthday
-        VARCHAR friendship_status
     }
 
     FILMS {
@@ -15,8 +24,12 @@ erDiagram
         TEXT description
         DATE release_date
         INT duration
-        VARCHAR genre
-        VARCHAR mpa
+        INTEGER mpa_id FK
+    }
+
+    FILM_GENRES {
+        BIGINT film_id FK
+        INTEGER genre_id FK
     }
 
     FILM_LIKES {
@@ -24,13 +37,15 @@ erDiagram
         BIGINT user_id FK
     }
 
-    USER_FRIENDS {
+    FRIENDSHIPS {
         BIGINT user_id FK
         BIGINT friend_id FK
     }
 
+    MPA ||--o{ FILMS : has_rating
+    FILMS ||--o{ FILM_GENRES : has
+    GENRES ||--o{ FILM_GENRES : belongs_to
     USERS ||--o{ FILM_LIKES : likes
     FILMS ||--o{ FILM_LIKES : liked_by
-
-    USERS ||--o{ USER_FRIENDS : has
-    USERS ||--o{ USER_FRIENDS : friend
+    USERS ||--o{ FRIENDSHIPS : adds
+    USERS ||--o{ FRIENDSHIPS : friend_of

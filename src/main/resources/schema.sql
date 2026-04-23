@@ -54,7 +54,6 @@ FOREIGN KEY (genre_id) REFERENCES genres(genre_id) ON DELETE CASCADE
 CREATE TABLE IF NOT EXISTS friendships (
     user_id BIGINT NOT NULL,
     friend_id BIGINT NOT NULL,
-    status VARCHAR(20) NOT NULL,
     PRIMARY KEY (user_id, friend_id),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (friend_id) REFERENCES users(id) ON DELETE CASCADE

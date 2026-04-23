@@ -72,11 +72,6 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     @Override
-    public void confirmFriend(long id, long friendId) {
-
-    }
-
-    @Override
     public void deleteFriend(long id, long friendId) {
 
     }

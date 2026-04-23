@@ -6,17 +6,15 @@ import ru.yandex.practicum.filmorate.model.User;
 import java.util.Collection;
 
 public interface UserStorage {
-    public User save(User user);
+    User save(User user);
 
-    public User update(User newUser) throws ValidationException;
+    User update(User newUser) throws ValidationException;
 
-    public Collection<User> findAll();
+    Collection<User> findAll();
 
-    public User getUser(long id);
+    User getUser(long id);
 
     void addFriend(long id, long friendId);
-
-    void confirmFriend(long id, long friendId);
 
     void deleteFriend(long id, long friendId);
 }

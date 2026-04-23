@@ -21,13 +21,13 @@ public class MpaController {
     private MpaService mpaService;
 
     @GetMapping
-    public ResponseEntity<List<Mpa>> getAllMpa(){
+    public ResponseEntity<List<Mpa>> getAllMpa() {
         List<Mpa> mpaList = mpaService.getAllMpa();
         return ResponseEntity.ok(mpaList);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Mpa> getMpaOnId(@PathVariable int id){
+    public ResponseEntity<Mpa> getMpaOnId(@PathVariable int id) {
         Mpa mpa = mpaService.getMpaOnId(id);
         return ResponseEntity.ok(mpa);
     }

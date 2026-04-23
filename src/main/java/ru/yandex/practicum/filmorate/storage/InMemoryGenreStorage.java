@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class InMemoryGenreStorage implements GenreStorage {
 
-    private final HashMap<Integer,Genre> genreMap;
+    private final HashMap<Integer, Genre> genreMap;
 
     public InMemoryGenreStorage() {
         genreMap = new HashMap<>(java.util.Map.of(
@@ -37,7 +37,7 @@ public class InMemoryGenreStorage implements GenreStorage {
     }
 
     @Override
-    public List<Integer> getAllIds(){
+    public List<Integer> getAllIds() {
         return genreMap.values().stream()
                 .map(Genre::getId)
                 .collect(Collectors.toList());

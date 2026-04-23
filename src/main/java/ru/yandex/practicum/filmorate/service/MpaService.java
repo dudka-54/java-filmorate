@@ -1,6 +1,5 @@
 package ru.yandex.practicum.filmorate.service;
 
-import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -27,7 +26,7 @@ public class MpaService {
 
     public Mpa getMpaOnId(Integer id) {
         log.info("Получение всех рейтингов по id {}", id);
-        if(!(mpaStorage.getAllIds().contains(id))){
+        if (!(mpaStorage.getAllIds().contains(id))) {
             throw new NotFoundException("Такого id нет");
         }
         return mpaStorage.getMpaOnId(id)

@@ -1,18 +1,15 @@
 package ru.yandex.practicum.filmorate.service;
 
-import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
-import ru.yandex.practicum.filmorate.model.FriendshipStatus;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.time.LocalDate;
 import java.util.Collection;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -62,7 +59,9 @@ public class UserService {
 
     public User update(User newUser) throws ValidationException {
         User existingUser = userStorage.getUser(newUser.getId());
-
+        if (existingUser == null) {
+            throw new NotFoundException("Пользователь с id " + newUser.getId() + " не найден");
+        }
         validateUser(newUser);
 
         User updatedUser = userStorage.update(newUser);
@@ -72,7 +71,7 @@ public class UserService {
 
 
     public Collection<User> findAll() {
-        log.debug("Использован метод по получению всех пользователей");
+        log.info("Использован метод по получению всех пользователей");
         return userStorage.findAll();
     }
 
@@ -81,17 +80,15 @@ public class UserService {
 
         User user = userStorage.getUser(id);
         User userFriend = userStorage.getUser(friendId);
-
-        if (id == friendId) {
-            throw new ValidationException("Нельзя добавить самого себя в друзья");
-        }
         if (user == null) {
             throw new NotFoundException("Пользователь с id " + id + " не найден");
         }
         if (userFriend == null) {
             throw new NotFoundException("Пользователь с id " + friendId + " не найден");
         }
-
+        if (id == friendId) {
+            throw new ValidationException("Нельзя добавить самого себя в друзья");
+        }
         if (user.getFriends().contains(friendId)) {
             throw new ValidationException("Пользователь уже в друзьях");
         }
@@ -117,15 +114,15 @@ public class UserService {
         if (userFriend == null) {
             throw new NotFoundException("Пользователь с id " + friendId + " не найден");
         }
-        if (!user.getFriendships().containsKey(friendId)) {
+        if (!user.getFriends().contains(friendId)) {
             log.debug("Пользователи {} и {} не являются друзьями, удалять нечего", id, friendId);
             return user;
         }
         validateUser(user);
         validateUser(userFriend);
 
-        user.getFriendships().remove(friendId);
-        userFriend.getFriendships().remove(id);
+        user.getFriends().remove(friendId);
+        userFriend.getFriends().remove(id);
 
         userStorage.deleteFriend(id, friendId);
         userStorage.deleteFriend(friendId, id);
@@ -138,17 +135,18 @@ public class UserService {
     }
 
     public Set<User> getFriendsSet(long id) throws ValidationException {
+        log.info("Вызван метод на получение множества друзей id - {}", id);
         User user = userStorage.getUser(id);
         if (user == null) {
             throw new NotFoundException("Пользователь с id " + id + " не найден");
         }
-        return user.getFriendships().entrySet().stream()
-                .filter(e -> e.getValue() == FriendshipStatus.CONFIRMED)
-                .map(e -> userStorage.getUser(e.getKey()))
+        return user.getFriends().stream()
+                .map(userStorage::getUser)
                 .collect(Collectors.toSet());
     }
 
     public Set<User> getCommonFriendsSet(long id, long otherId) {
+        log.info("метод получения множества общих друзей {} и {}", id, otherId);
         Set<User> friends1 = getFriendsSet(id);
         Set<User> friends2 = getFriendsSet(otherId);
 

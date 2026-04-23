@@ -11,7 +11,6 @@ import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.dao.mappers.UserMapper;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
-import ru.yandex.practicum.filmorate.model.FriendshipStatus;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
@@ -44,7 +43,7 @@ public class UserDbStorage implements UserStorage {
         }, keyHolder);
 
         user.setId(keyHolder.getKeyAs(Long.class));
-        user.setFriendships(new HashMap<>());
+        user.setFriends(new HashSet<>());
         log.info("Создан пользователь с id={}", user.getId());
         return user;
     }
@@ -75,7 +74,7 @@ public class UserDbStorage implements UserStorage {
                 "ORDER BY id ";
         List<User> userList = jdbcTemplate.query(sql, new UserMapper());
         userList.forEach(user -> {
-            user.setFriendships(loadFriendshipsStatuses(user.getId()));
+            user.setFriends(loadFriends(user.getId()));
         });
         return userList;
     }
@@ -86,7 +85,10 @@ public class UserDbStorage implements UserStorage {
                 "FROM users " +
                 "WHERE id = ? ";
         User user = jdbcTemplate.queryForObject(sql, new UserMapper(), id);
-        user.setFriendships(loadFriendshipsStatuses(id));
+        if (user == null) {
+            throw new NullPointerException("user не найден");
+        }
+        user.setFriends(loadFriends(id));
         return user;
     }
 
@@ -97,33 +99,26 @@ public class UserDbStorage implements UserStorage {
     }
 
     @Override
-    public void confirmFriend(long id, long friendId) {
-        String sql = "UPDATE friendships " +
-                "SET status = 'CONFIRMED' " +
+    public void deleteFriend(long id, long friendId) {
+        if (getUser(id) == null || getUser(friendId) == null) {
+            throw new NotFoundException("Такого пользователя нет");
+        }
+        String sql = "DELETE " +
+                "FROM friendships " +
                 "WHERE user_id = ? AND friend_id = ? ";
         jdbcTemplate.update(sql, id, friendId);
     }
 
-    @Override
-    public void deleteFriend(long id, long friendId){
-        String sql = "DELETE " +
-                    "FROM friendships " +
-                    "WHERE user_id = ? AND friend_id = ? ";
-        jdbcTemplate.update(sql, id, friendId);
-    }
-
-    private Map<Long, FriendshipStatus> loadFriendshipsStatuses(long userId){
-        String sql = "SELECT friend_id, status FROM friendships WHERE user_id = ?";
+    private Set<Long> loadFriends(long userId) {
+        String sql = "SELECT friend_id FROM friendships WHERE user_id = ?";
 
         List<Map<String, Object>> rows = jdbcTemplate.queryForList(sql, userId);
-        Map<Long, FriendshipStatus> map = new HashMap<>();
+        Set<Long> set = new HashSet<>();
 
         for (Map<String, Object> row : rows) {
             Long friendId = (Long) row.get("friend_id");
-            String statusStr = (String) row.get("status");
-            map.put(friendId, FriendshipStatus.valueOf(statusStr));
+            set.add(friendId);
         }
-
-        return map;
+        return set;
     }
 }
