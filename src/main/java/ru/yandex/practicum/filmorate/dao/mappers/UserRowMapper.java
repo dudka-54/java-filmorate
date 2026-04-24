@@ -9,7 +9,7 @@ import java.sql.SQLException;
 import java.util.HashSet;
 
 @Component
-public class UserMapper implements RowMapper<User> {
+public class UserRowMapper implements RowMapper<User> {
     @Override
     public User mapRow(ResultSet resultSet, int rowNum) throws SQLException {
         User user = new User();

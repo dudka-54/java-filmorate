@@ -9,8 +9,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
-import ru.yandex.practicum.filmorate.dao.mappers.FilmMapper;
-import ru.yandex.practicum.filmorate.dao.mappers.GenreMapper;
+import ru.yandex.practicum.filmorate.dao.mappers.FilmRowMapper;
+import ru.yandex.practicum.filmorate.dao.mappers.GenreRowMapper;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
@@ -88,7 +88,7 @@ public class FilmDbStorage implements FilmStorage {
                 "WHERE f.id = ? ";
 
         try {
-            Film film = jdbcTemplate.queryForObject(sql, new FilmMapper(), id);
+            Film film = jdbcTemplate.queryForObject(sql, new FilmRowMapper(), id);
             film.setGenres(loadGenres(id));
             film.setLikes(loadLikes(id));
             return film;
@@ -103,7 +103,7 @@ public class FilmDbStorage implements FilmStorage {
                 "INNER JOIN mpa AS m ON f.mpa_id = m.mpa_id ";
 
         Map<Long, Film> films = new HashMap<>();
-        for (Film film : jdbcTemplate.query(sql, new FilmMapper())) {
+        for (Film film : jdbcTemplate.query(sql, new FilmRowMapper())) {
             film.setGenres(loadGenres(film.getId()));
             film.setLikes(loadLikes(film.getId()));
             films.put(film.getId(), film);
@@ -117,7 +117,7 @@ public class FilmDbStorage implements FilmStorage {
                 "JOIN genres g ON fg.genre_id = g.genre_id " +
                 "WHERE fg.film_id = ?";
 
-        List<Genre> genres = jdbcTemplate.query(sql, new GenreMapper(), id);
+        List<Genre> genres = jdbcTemplate.query(sql, new GenreRowMapper(), id);
         return new HashSet<>(genres);
     }
 

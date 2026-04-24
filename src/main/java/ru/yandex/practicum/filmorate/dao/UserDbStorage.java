@@ -8,7 +8,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
-import ru.yandex.practicum.filmorate.dao.mappers.UserMapper;
+import ru.yandex.practicum.filmorate.dao.mappers.UserRowMapper;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
@@ -72,7 +72,7 @@ public class UserDbStorage implements UserStorage {
         String sql = "SELECT * " +
                 "FROM users " +
                 "ORDER BY id ";
-        List<User> userList = jdbcTemplate.query(sql, new UserMapper());
+        List<User> userList = jdbcTemplate.query(sql, new UserRowMapper());
         userList.forEach(user -> {
             user.setFriends(loadFriends(user.getId()));
         });
@@ -84,7 +84,7 @@ public class UserDbStorage implements UserStorage {
         String sql = "SELECT * " +
                 "FROM users " +
                 "WHERE id = ? ";
-        User user = jdbcTemplate.queryForObject(sql, new UserMapper(), id);
+        User user = jdbcTemplate.queryForObject(sql, new UserRowMapper(), id);
         if (user == null) {
             throw new NullPointerException("user не найден");
         }
