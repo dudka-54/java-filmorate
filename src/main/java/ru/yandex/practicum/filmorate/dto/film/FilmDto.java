@@ -1,8 +1,11 @@
-package ru.yandex.practicum.filmorate.model;
+package ru.yandex.practicum.filmorate.dto.film;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.Mpa;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -13,7 +16,8 @@ import java.util.Set;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Film {
+public class FilmDto {
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private Long id;
     private String name;
     private String description;
@@ -22,5 +26,7 @@ public class Film {
     private Mpa mpa;
 
     private List<Genre> genres = new ArrayList<>();
+
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private Set<Long> likes = new HashSet<>();
 }
