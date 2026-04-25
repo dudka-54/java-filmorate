@@ -63,7 +63,7 @@ class FilmorateApplicationTests {
     @Test
     void testGetUser() {
         User saved = userStorage.save(createTestUser());
-        User found = userStorage.getUser(saved.getId());
+        User found = userStorage.getUser(saved.getId()).get();
 
         assertNotNull(found);
         assertEquals(saved.getId(), found.getId());
@@ -74,7 +74,7 @@ class FilmorateApplicationTests {
     @Test
     void testGetUserNotFound() {
         try {
-            User found = userStorage.getUser(9999L);
+            User found = userStorage.getUser(9999L).get();
             fail("Expected exception was not thrown");
         } catch (Exception e) {
             assertTrue(e instanceof RuntimeException);
@@ -90,7 +90,7 @@ class FilmorateApplicationTests {
         User updated = userStorage.update(saved);
         assertEquals("Updated Name", updated.getName());
 
-        User found = userStorage.getUser(saved.getId());
+        User found = userStorage.getUser(saved.getId()).get();
         assertEquals("Updated Name", found.getName());
         assertEquals("updated@mail.ru", found.getEmail());
     }
@@ -118,7 +118,7 @@ class FilmorateApplicationTests {
 
         userStorage.addFriend(user1.getId(), user2.getId());
 
-        User updated = userStorage.getUser(user1.getId());
+        User updated = userStorage.getUser(user1.getId()).get();
         assertTrue(updated.getFriends().contains(user2.getId()));
         assertEquals(1, updated.getFriends().size());
     }
@@ -131,7 +131,7 @@ class FilmorateApplicationTests {
         userStorage.addFriend(user1.getId(), user2.getId());
         userStorage.deleteFriend(user1.getId(), user2.getId());
 
-        User updated = userStorage.getUser(user1.getId());
+        User updated = userStorage.getUser(user1.getId()).get();
         assertEquals(0, updated.getFriends().size());
     }
 
@@ -143,7 +143,7 @@ class FilmorateApplicationTests {
         userStorage.addFriend(user1.getId(), user2.getId());
         userStorage.addFriend(user2.getId(), user1.getId());
 
-        User updated = userStorage.getUser(user1.getId());
+        User updated = userStorage.getUser(user1.getId()).get();
         assertEquals(1, updated.getFriends().size());
     }
 
@@ -159,7 +159,7 @@ class FilmorateApplicationTests {
         mpa.setName("G");
         film.setMpa(mpa);
 
-        film.setGenres(new HashSet<>());
+        film.setGenres(new ArrayList<>());
         film.setLikes(new HashSet<>());
         return film;
     }
@@ -177,7 +177,7 @@ class FilmorateApplicationTests {
     @Test
     void testGetFilm() {
         Film saved = filmStorage.save(createTestFilm());
-        Film found = filmStorage.getFilm(saved.getId());
+        Film found = filmStorage.getFilm(saved.getId()).get();
 
         assertNotNull(found);
         assertEquals(saved.getId(), found.getId());
@@ -207,7 +207,7 @@ class FilmorateApplicationTests {
         Film updated = filmStorage.update(saved);
         assertEquals("Updated Film", updated.getName());
 
-        Film found = filmStorage.getFilm(saved.getId());
+        Film found = filmStorage.getFilm(saved.getId()).get();
         assertEquals("Updated Film", found.getName());
         assertEquals("Updated Description", found.getDescription());
     }
@@ -224,7 +224,7 @@ class FilmorateApplicationTests {
     @Test
     void testSaveFilmWithGenres() {
         Film film = createTestFilm();
-        Set<Genre> genres = new HashSet<>();
+        List<Genre> genres = new ArrayList<>();
         Genre genre1 = new Genre();
         genre1.setId(1);
         genre1.setName("Комедия");
@@ -232,7 +232,7 @@ class FilmorateApplicationTests {
         film.setGenres(genres);
 
         Film saved = filmStorage.save(film);
-        Film found = filmStorage.getFilm(saved.getId());
+        Film found = filmStorage.getFilm(saved.getId()).get();
 
         assertEquals(1, found.getGenres().size());
     }
@@ -244,7 +244,7 @@ class FilmorateApplicationTests {
 
         filmStorage.addLike(film.getId(), user.getId());
 
-        Film found = filmStorage.getFilm(film.getId());
+        Film found = filmStorage.getFilm(film.getId()).get();
         assertEquals(1, found.getLikes().size());
     }
 
@@ -256,7 +256,7 @@ class FilmorateApplicationTests {
         filmStorage.addLike(film.getId(), user.getId());
         filmStorage.deleteLike(film.getId(), user.getId());
 
-        Film found = filmStorage.getFilm(film.getId());
+        Film found = filmStorage.getFilm(film.getId()).get();
         assertEquals(0, found.getLikes().size());
     }
 }

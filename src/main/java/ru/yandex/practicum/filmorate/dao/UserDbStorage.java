@@ -62,7 +62,7 @@ public class UserDbStorage implements UserStorage {
                 newUser.getBirthday(),
                 newUser.getId()
         );
-
+        newUser.setFriends(loadFriends(newUser.getId()));
         log.info("Обновлён пользователь с id={}", newUser.getId());
         return newUser;
     }
@@ -80,7 +80,7 @@ public class UserDbStorage implements UserStorage {
     }
 
     @Override
-    public User getUser(long id) {
+    public Optional<User> getUser(long id) {
         String sql = "SELECT * " +
                 "FROM users " +
                 "WHERE id = ? ";
@@ -89,7 +89,7 @@ public class UserDbStorage implements UserStorage {
             throw new NullPointerException("user не найден");
         }
         user.setFriends(loadFriends(id));
-        return user;
+        return Optional.of(user);
     }
 
     @Override
@@ -100,7 +100,7 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public void deleteFriend(long id, long friendId) {
-        if (getUser(id) == null || getUser(friendId) == null) {
+        if (getUser(id).isEmpty() || getUser(friendId).isEmpty()) {
             throw new NotFoundException("Такого пользователя нет");
         }
         String sql = "DELETE " +

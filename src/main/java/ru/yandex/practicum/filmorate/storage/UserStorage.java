@@ -4,6 +4,7 @@ import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.Collection;
+import java.util.Optional;
 
 public interface UserStorage {
     User save(User user);
@@ -12,7 +13,7 @@ public interface UserStorage {
 
     Collection<User> findAll();
 
-    User getUser(long id);
+    Optional<User> getUser(long id);
 
     void addFriend(long id, long friendId);
 

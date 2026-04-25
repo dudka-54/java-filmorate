@@ -4,13 +4,14 @@ import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 
 import java.util.Map;
+import java.util.Optional;
 
 public interface FilmStorage {
     Film save(Film film);
 
     Film update(Film newFilm) throws ValidationException;
 
-    Film getFilm(long id);
+    Optional<Film> getFilm(long id);
 
     Map<Long, Film> getFilms();
 

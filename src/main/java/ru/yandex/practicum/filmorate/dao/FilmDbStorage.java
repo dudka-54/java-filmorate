@@ -81,7 +81,7 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     @Override
-    public Film getFilm(long id) {
+    public Optional<Film> getFilm(long id) {
         String sql = "SELECT f.*, m.mpa_name " +
                 "FROM films AS f " +
                 "JOIN mpa AS m ON f.mpa_id = m.mpa_id " +
@@ -91,7 +91,7 @@ public class FilmDbStorage implements FilmStorage {
             Film film = jdbcTemplate.queryForObject(sql, new FilmRowMapper(), id);
             film.setGenres(loadGenres(id));
             film.setLikes(loadLikes(id));
-            return film;
+            return Optional.of(film);
         } catch (EmptyResultDataAccessException e) {
             throw new NotFoundException(e.getMessage());
         }
@@ -111,14 +111,14 @@ public class FilmDbStorage implements FilmStorage {
         return films;
     }
 
-    private Set<Genre> loadGenres(Long id) {
+    private List<Genre> loadGenres(Long id) {
         String sql = "SELECT g.genre_id, g.genre_name " +
                 "FROM film_genres fg " +
                 "JOIN genres g ON fg.genre_id = g.genre_id " +
                 "WHERE fg.film_id = ?";
 
         List<Genre> genres = jdbcTemplate.query(sql, new GenreRowMapper(), id);
-        return new HashSet<>(genres);
+        return new ArrayList<>(genres);
     }
 
     public void saveGenres(Film film) {
@@ -143,7 +143,7 @@ public class FilmDbStorage implements FilmStorage {
         jdbcTemplate.update(sql, filmId, userId);
     }
 
-    private Set<Long> loadLikes(long filmId) {
+    public Set<Long> loadLikes(long filmId) {
         String sql = "SELECT user_id FROM film_likes WHERE film_id = ?";
         try {
             List<Long> likes = jdbcTemplate.queryForList(sql, Long.class, filmId);
