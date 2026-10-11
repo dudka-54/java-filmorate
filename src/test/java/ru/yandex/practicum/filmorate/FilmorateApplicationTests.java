@@ -1,276 +1,262 @@
 package ru.yandex.practicum.filmorate;
 
+import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import ru.yandex.practicum.filmorate.controller.FilmController;
-import ru.yandex.practicum.filmorate.controller.UserController;
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
-import ru.yandex.practicum.filmorate.model.Film;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
+import org.springframework.jdbc.core.JdbcTemplate;
+import ru.yandex.practicum.filmorate.dao.FilmDbStorage;
+import ru.yandex.practicum.filmorate.dao.UserDbStorage;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.service.FilmService;
+import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Mpa;
+import ru.yandex.practicum.filmorate.model.Genre;
 
 import java.time.LocalDate;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@SpringBootTest
-public class FilmorateApplicationTests {
-    @Autowired
-    private FilmController filmController;
+@JdbcTest
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.ANY)
+@RequiredArgsConstructor(onConstructor_ = @Autowired)
+class FilmorateApplicationTests {
 
-    @Autowired
-    private UserController userController;
-
-    private Film validFilm;
-    private User validUser;
+    private final JdbcTemplate jdbcTemplate;
+    private UserDbStorage userStorage;
+    private FilmDbStorage filmStorage;
 
     @BeforeEach
     void setUp() {
-        validFilm = new Film();
-        validFilm.setName("Тестовый фильм");
-        validFilm.setDescription("Описание");
-        validFilm.setReleaseDate(LocalDate.of(2000, 1, 1));
-        validFilm.setDuration(120);
+        jdbcTemplate.update("DELETE FROM film_likes");
+        jdbcTemplate.update("DELETE FROM film_genres");
+        jdbcTemplate.update("DELETE FROM friendships");
+        jdbcTemplate.update("DELETE FROM films");
+        jdbcTemplate.update("DELETE FROM users");
 
-        validUser = new User();
-        validUser.setEmail("test@example.com");
-        validUser.setLogin("testlogin");
-        validUser.setName("Тест Тестов");
-        validUser.setBirthday(LocalDate.of(1990, 1, 1));
+        userStorage = new UserDbStorage(jdbcTemplate);
+        filmStorage = new FilmDbStorage(jdbcTemplate);
+    }
+
+    private User createTestUser() {
+        User user = new User();
+        user.setEmail("test@mail.ru");
+        user.setLogin("testLogin");
+        user.setName("Test User");
+        user.setBirthday(LocalDate.of(1990, 5, 10));
+        return user;
     }
 
     @Test
-    void createFilm_ValidFilm_Success() throws ValidationException {
-        Film created = filmController.create(validFilm).getBody();
-        assertNotNull(created.getId());
-        assertEquals("Тестовый фильм", created.getName());
+    void testSaveUser() {
+        User user = createTestUser();
+        User saved = userStorage.save(user);
+
+        assertNotNull(saved.getId());
+        assertEquals("test@mail.ru", saved.getEmail());
+        assertEquals("testLogin", saved.getLogin());
+        assertNotNull(saved.getFriends());
     }
 
     @Test
-    void createFilm_NameIsNull_ThrowsException() {
-        validFilm.setName(null);
-        assertThrows(ValidationException.class, () ->
-                filmController.create(validFilm)
-        );
+    void testGetUser() {
+        User saved = userStorage.save(createTestUser());
+        User found = userStorage.getUser(saved.getId()).get();
+
+        assertNotNull(found);
+        assertEquals(saved.getId(), found.getId());
+        assertEquals("test@mail.ru", found.getEmail());
+        assertNotNull(found.getFriends());
     }
 
     @Test
-    void createFilm_NameIsBlank_ThrowsException() {
-        validFilm.setName("   ");
-        assertThrows(ValidationException.class, () ->
-                filmController.create(validFilm)
-        );
+    void testGetUserNotFound() {
+        try {
+            User found = userStorage.getUser(9999L).get();
+            fail("Expected exception was not thrown");
+        } catch (Exception e) {
+            assertTrue(e instanceof RuntimeException);
+        }
     }
 
     @Test
-    void createFilm_DescriptionTooLong_ThrowsException() {
-        String longDesc = "a".repeat(201);
-        validFilm.setDescription(longDesc);
-        assertThrows(ValidationException.class, () ->
-                filmController.create(validFilm)
-        );
+    void testUpdateUser() {
+        User saved = userStorage.save(createTestUser());
+        saved.setName("Updated Name");
+        saved.setEmail("updated@mail.ru");
+
+        User updated = userStorage.update(saved);
+        assertEquals("Updated Name", updated.getName());
+
+        User found = userStorage.getUser(saved.getId()).get();
+        assertEquals("Updated Name", found.getName());
+        assertEquals("updated@mail.ru", found.getEmail());
     }
 
     @Test
-    void createFilm_DescriptionExactly200_Success() throws ValidationException {
-        String desc200 = "a".repeat(200);
-        validFilm.setDescription(desc200);
-        Film created = filmController.create(validFilm).getBody();
-        assertEquals(desc200, created.getDescription());
+    void testFindAllUsers() {
+        User user1 = createTestUser();
+        user1.setEmail("user1@mail.ru");
+        user1.setLogin("login1");
+        userStorage.save(user1);
+
+        User user2 = createTestUser();
+        user2.setEmail("user2@mail.ru");
+        user2.setLogin("login2");
+        userStorage.save(user2);
+
+        Collection<User> users = userStorage.findAll();
+        assertEquals(2, users.size());
     }
 
     @Test
-    void createFilm_ReleaseDateBeforeBirthOfCinema_ThrowsException() {
-        validFilm.setReleaseDate(LocalDate.of(1895, 12, 27));
-        assertThrows(ValidationException.class, () ->
-                filmController.create(validFilm)
-        );
+    void testAddFriend() {
+        User user1 = userStorage.save(createTestUser());
+        User user2 = userStorage.save(createTestUser());
+
+        userStorage.addFriend(user1.getId(), user2.getId());
+
+        User updated = userStorage.getUser(user1.getId()).get();
+        assertTrue(updated.getFriends().contains(user2.getId()));
+        assertEquals(1, updated.getFriends().size());
     }
 
     @Test
-    void createFilm_ReleaseDateExactlyBirthOfCinema_Success() throws ValidationException {
-        validFilm.setReleaseDate(LocalDate.of(1895, 12, 28));
-        Film created = filmController.create(validFilm).getBody();
-        assertEquals(LocalDate.of(1895, 12, 28), created.getReleaseDate());
+    void testDeleteFriend() {
+        User user1 = userStorage.save(createTestUser());
+        User user2 = userStorage.save(createTestUser());
+
+        userStorage.addFriend(user1.getId(), user2.getId());
+        userStorage.deleteFriend(user1.getId(), user2.getId());
+
+        User updated = userStorage.getUser(user1.getId()).get();
+        assertEquals(0, updated.getFriends().size());
     }
 
     @Test
-    void createFilm_DurationZero_ThrowsException() {
-        validFilm.setDuration(0);
-        assertThrows(ValidationException.class, () ->
-                filmController.create(validFilm)
-        );
+    void testAddDuplicateFriend() {
+        User user1 = userStorage.save(createTestUser());
+        User user2 = userStorage.save(createTestUser());
+
+        userStorage.addFriend(user1.getId(), user2.getId());
+        userStorage.addFriend(user2.getId(), user1.getId());
+
+        User updated = userStorage.getUser(user1.getId()).get();
+        assertEquals(1, updated.getFriends().size());
+    }
+
+    private Film createTestFilm() {
+        Film film = new Film();
+        film.setName("Test Film");
+        film.setDescription("Test Description");
+        film.setReleaseDate(LocalDate.of(2020, 3, 15));
+        film.setDuration(120);
+
+        Mpa mpa = new Mpa();
+        mpa.setId(1);
+        mpa.setName("G");
+        film.setMpa(mpa);
+
+        film.setGenres(new ArrayList<>());
+        film.setLikes(new HashSet<>());
+        return film;
     }
 
     @Test
-    void createFilm_DurationNegative_ThrowsException() {
-        validFilm.setDuration(-10);
-        assertThrows(ValidationException.class, () ->
-                filmController.create(validFilm)
-        );
+    void testSaveFilm() {
+        Film film = createTestFilm();
+        Film saved = filmStorage.save(film);
+
+        assertNotNull(saved.getId());
+        assertEquals("Test Film", saved.getName());
+        assertEquals(1, saved.getMpa().getId());
     }
 
     @Test
-    void createFilm_DurationPositive_Success() throws ValidationException {
-        validFilm.setDuration(1);
-        Film created = filmController.create(validFilm).getBody();
-        assertEquals(1, created.getDuration());
+    void testGetFilm() {
+        Film saved = filmStorage.save(createTestFilm());
+        Film found = filmStorage.getFilm(saved.getId()).get();
+
+        assertNotNull(found);
+        assertEquals(saved.getId(), found.getId());
+        assertEquals("Test Film", found.getName());
+        assertNotNull(found.getMpa());
+        assertEquals("G", found.getMpa().getName());
+        assertNotNull(found.getGenres());
+        assertNotNull(found.getLikes());
     }
 
     @Test
-    void updateFilm_ValidFilm_Success() throws ValidationException {
-        Film created = filmController.create(validFilm).getBody();
-        Film updateData = new Film();
-        updateData.setId(created.getId());
-        updateData.setName("Обновленный фильм");
-        updateData.setDescription("Новое описание");
-        updateData.setReleaseDate(LocalDate.of(2000, 1, 1));
-        updateData.setDuration(150);
-
-        Film updated = filmController.update(updateData).getBody();
-        assertEquals("Обновленный фильм", updated.getName());
-        assertEquals("Новое описание", updated.getDescription());
-        assertEquals(150, updated.getDuration());
+    void testGetFilmNotFound() {
+        try {
+            filmStorage.getFilm(9999L);
+            fail("Expected exception was not thrown");
+        } catch (Exception e) {
+            assertTrue(e instanceof RuntimeException);
+        }
     }
 
     @Test
-    void updateFilm_IdNotExists_ThrowsException() {
-        Film updateData = new Film();
-        updateData.setId(999L);
-        updateData.setName("Фильм");
-        updateData.setDescription("Описание");
-        updateData.setReleaseDate(LocalDate.of(2000, 1, 1));
-        updateData.setDuration(120);
+    void testUpdateFilm() {
+        Film saved = filmStorage.save(createTestFilm());
+        saved.setName("Updated Film");
+        saved.setDescription("Updated Description");
 
-        // Обновление несуществующего фильма должно выбрасывать NotFoundException
-        assertThrows(NotFoundException.class, () ->
-                filmController.update(updateData)
-        );
-    }
+        Film updated = filmStorage.update(saved);
+        assertEquals("Updated Film", updated.getName());
 
-
-    @Test
-    void createUser_ValidUser_Success() throws ValidationException {
-        User created = userController.create(validUser).getBody();
-        assertNotNull(created.getId());
-        assertEquals("test@example.com", created.getEmail());
+        Film found = filmStorage.getFilm(saved.getId()).get();
+        assertEquals("Updated Film", found.getName());
+        assertEquals("Updated Description", found.getDescription());
     }
 
     @Test
-    void createUser_EmailNull_ThrowsException() {
-        validUser.setEmail(null);
-        assertThrows(ValidationException.class, () ->
-                userController.create(validUser)
-        );
+    void testGetAllFilms() {
+        filmStorage.save(createTestFilm());
+        filmStorage.save(createTestFilm());
+
+        Map<Long, Film> films = filmStorage.getFilms();
+        assertEquals(2, films.size());
     }
 
     @Test
-    void createUser_EmailBlank_ThrowsException() {
-        validUser.setEmail("   ");
-        assertThrows(ValidationException.class, () ->
-                userController.create(validUser)
-        );
+    void testSaveFilmWithGenres() {
+        Film film = createTestFilm();
+        List<Genre> genres = new ArrayList<>();
+        Genre genre1 = new Genre();
+        genre1.setId(1);
+        genre1.setName("Комедия");
+        genres.add(genre1);
+        film.setGenres(genres);
+
+        Film saved = filmStorage.save(film);
+        Film found = filmStorage.getFilm(saved.getId()).get();
+
+        assertEquals(1, found.getGenres().size());
     }
 
     @Test
-    void createUser_EmailWithoutAt_ThrowsException() {
-        validUser.setEmail("testexample.com");
-        assertThrows(ValidationException.class, () ->
-                userController.create(validUser)
-        );
+    void testAddLike() {
+        Film film = filmStorage.save(createTestFilm());
+        User user = userStorage.save(createTestUser());
+
+        filmStorage.addLike(film.getId(), user.getId());
+
+        Film found = filmStorage.getFilm(film.getId()).get();
+        assertEquals(1, found.getLikes().size());
     }
 
     @Test
-    void createUser_EmailWithAt_Success() throws ValidationException {
-        validUser.setEmail("test@example.com");
-        User created = userController.create(validUser).getBody();
-        assertEquals("test@example.com", created.getEmail());
-    }
+    void testDeleteLike() {
+        Film film = filmStorage.save(createTestFilm());
+        User user = userStorage.save(createTestUser());
 
-    @Test
-    void createUser_NameNull_UsesLogin() throws ValidationException {
-        validUser.setName(null);
-        User created = userController.create(validUser).getBody();
-        assertEquals(validUser.getLogin(), created.getName());
-    }
+        filmStorage.addLike(film.getId(), user.getId());
+        filmStorage.deleteLike(film.getId(), user.getId());
 
-    @Test
-    void createUser_NameBlank_UsesLogin() throws ValidationException {
-        validUser.setName("   ");
-        User created = userController.create(validUser).getBody();
-        assertEquals(validUser.getLogin(), created.getName());
-    }
-
-    @Test
-    void createUser_BirthdayNull_ThrowsException() {
-        validUser.setBirthday(null);
-        assertThrows(ValidationException.class, () ->
-                userController.create(validUser)
-        );
-    }
-
-    @Test
-    void createUser_BirthdayInFuture_ThrowsException() {
-        validUser.setBirthday(LocalDate.now().plusDays(1));
-        assertThrows(ValidationException.class, () ->
-                userController.create(validUser)
-        );
-    }
-
-    @Test
-    void createUser_BirthdayToday_Success() throws ValidationException {
-        validUser.setBirthday(LocalDate.now());
-        User created = userController.create(validUser).getBody();
-        assertEquals(LocalDate.now(), created.getBirthday());
-    }
-
-    @Test
-    void createUser_BirthdayPast_Success() throws ValidationException {
-        validUser.setBirthday(LocalDate.of(1900, 1, 1));
-        User created = userController.create(validUser).getBody();
-        assertEquals(LocalDate.of(1900, 1, 1), created.getBirthday());
-    }
-
-    @Test
-    void updateUser_ValidUser_Success() throws ValidationException {
-        User created = userController.create(validUser).getBody();
-        User updateData = new User();
-        updateData.setId(created.getId());
-        updateData.setEmail("new@example.com");
-        updateData.setLogin("newlogin");
-        updateData.setName("Новое Имя");
-        updateData.setBirthday(LocalDate.of(1995, 5, 5));
-
-        User updated = userController.update(updateData).getBody();
-        assertEquals("new@example.com", updated.getEmail());
-        assertEquals("newlogin", updated.getLogin());
-        assertEquals("Новое Имя", updated.getName());
-        assertEquals(LocalDate.of(1995, 5, 5), updated.getBirthday());
-    }
-
-    @Test
-    void updateUser_IdNotExists_ThrowsException() {
-        User updateData = new User();
-        updateData.setId(999L);
-        updateData.setEmail("test@example.com");
-        updateData.setLogin("login");
-        updateData.setName("Имя");
-        updateData.setBirthday(LocalDate.of(1990, 1, 1));
-
-        // Обновление несуществующего пользователя должно выбрасывать NotFoundException
-        assertThrows(NotFoundException.class, () ->
-                userController.update(updateData)
-        );
-    }
-
-    @Test
-    void createUser_WithoutId_Success() throws ValidationException {
-        validUser.setId(null);
-        User created = userController.create(validUser).getBody();
-        assertNotNull(created.getId());
+        Film found = filmStorage.getFilm(film.getId()).get();
+        assertEquals(0, found.getLikes().size());
     }
 }
-

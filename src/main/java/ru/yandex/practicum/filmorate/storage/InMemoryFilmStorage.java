@@ -9,6 +9,7 @@ import ru.yandex.practicum.filmorate.model.Film;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @Component
 @AllArgsConstructor
@@ -61,8 +62,21 @@ public class InMemoryFilmStorage implements FilmStorage {
         return ++currentMaxId;
     }
 
-    public Film getFilm(long id) {
-        return films.get(id);
+
+    //Не писал реализацию данных методов так как InMemoryFilmStorage рудимент для показательной работы @Qualifier
+    @Override
+    public Optional<Film> getFilm(long id) {
+        return Optional.ofNullable(films.get(id));
+    }
+
+    @Override
+    public void addLike(long filmId, long userId) {
+
+    }
+
+    @Override
+    public void deleteLike(long filmId, long userId) {
+
     }
 
 
